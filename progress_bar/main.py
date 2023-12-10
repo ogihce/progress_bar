@@ -1,5 +1,22 @@
 import shutil
 import sys
+from enum import Enum
+
+class Percent(Enum):
+    SHOW_IN_BAR = 0
+    SHOW_IN_BEFORE_SUFFIX = 1
+    SHOW_IN_AFTER_SUFFIX = 2
+    SHOW_IN_BEFORE_PREFIX = 3
+    SHOW_IN_AFTER_PREFIX = 4
+    DONT_SHOW = 5
+
+class Step(Enum):
+    SHOW_IN_BAR = 0
+    SHOW_IN_BEFORE_SUFFIX = 1
+    SHOW_IN_AFTER_SUFFIX = 2
+    SHOW_IN_BEFORE_PREFIX = 3
+    SHOW_IN_AFTER_PREFIX = 4
+    DONT_SHOW = 5
 
 def get_terminal_size():
     """
@@ -23,10 +40,22 @@ def make(current, max, **kwargs):
         現在の値
     max : int
         最大値
-    show_percent : bool, optional
-        パーセントを表示するかどうか
-    showstep : bool, optional
-        現在の値と最大値を表示するかどうか
+    show_percent : Enum, optional
+        パーセンテージの表示方法
+        SHOW_IN_BAR: バーの中に表示 (ステップと同時に表示することはできない)
+        SHOW_IN_BEFORE_PREFIX: prefixの前に表示
+        SHOW_IN_AFTER_PREFIX: prefixの後に表示
+        SHOW_IN_BEFORE_SUFFIX: suffixの前に表示
+        SHOW_IN_AFTER_SUFFIX: suffixの後に表示
+        DONT_SHOW: 表示しない
+    showstep : Enum, optional
+        ステップの表示方法
+        SHOW_IN_BAR: バーの中に表示 (パーセンテージと同時に表示することはできない)
+        SHOW_IN_BEFORE_PREFIX: prefixの前に表示
+        SHOW_IN_AFTER_PREFIX: prefixの後に表示
+        SHOW_IN_BEFORE_SUFFIX: suffixの前に表示
+        SHOW_IN_AFTER_SUFFIX: suffixの後に表示
+        DONT_SHOW: 表示しない
     filled_char : str, optional
         バーの塗りつぶしに使う文字
     empty_char : str, optional
@@ -48,20 +77,6 @@ def make(current, max, **kwargs):
     ValueError
         show_percent, showstep, filled_char, empty_char, prefix, bar_length のいずれかが不正な値の場合
     """
-    if kwargs.get('show_percent') is None:
-        show_percent = True
-    else:
-        try:
-            show_percent = bool(kwargs.get('show_percent'))
-        except ValueError:
-            raise ValueError('show_percent must be a boolean or can be converted to a boolean')
-    if kwargs.get('showstep') is None:
-        showstep = False
-    else:
-        try:
-            showstep = bool(kwargs.get('showstep'))
-        except ValueError:
-            raise ValueError('showstep must be a boolean or can be converted to a boolean')
     if kwargs.get('filled_char') is None:
         filled_char = '█'
     else:
@@ -91,28 +106,112 @@ def make(current, max, **kwargs):
         except ValueError:
             raise ValueError('suffix must be a string or can be converted to a string')
     if kwargs.get('bar_length') is None:
-        bar_length = get_terminal_size() - len(prefix) - len(suffix) - 4
-        if show_percent:
-            bar_length -= (7 + 1)
-        if showstep:
-            bar_length -= (len(str(max)) * 2 + 3 + 2 + 1)
+        bar_length = get_terminal_size() - 2
     else:
         try:
             bar_length = int(kwargs.get('bar_length'))
         except ValueError:
             raise ValueError('bar_length must be an integer or can be converted to an integer')
         
-    percentage = round(current / max * 100, 2)
-    filled_length = int(bar_length * current / max)
-    bar = "[" + filled_char * filled_length + empty_char * (bar_length - filled_length) + "]"
-    if prefix != '':
-        bar = f'{prefix}{bar}'
-    if show_percent:
-        bar = f'{bar} {percentage:6.2f}%'
-    if showstep:
-        bar = f'{bar} ({str(current).rjust(len(str(max)))} / {max})'
-    if suffix != '':
-        bar = f'{bar} {suffix}'
+    # バーの長さを計算
+    # バーの前後に表示する文字列の長さを考慮する
+    bar_length -= len(prefix) + len(suffix)
+    # パーセンテージをバー以外に表示する場合は8文字分のスペースを確保する
+    if kwargs.get('show_percent') is not None and Percent(kwargs.get('show_percent')) != Percent.DONT_SHOW and Percent(kwargs.get('show_percent')) != Percent.SHOW_IN_BAR:
+        bar_length -= 8
+    # ステップをバー以外に表示する場合は最大値の桁数 * 2 + 3 + 1分のスペースを確保する
+    if kwargs.get('showstep') is not None and Step(kwargs.get('showstep')) != Step.DONT_SHOW and Step(kwargs.get('showstep')) != Step.SHOW_IN_BAR:
+        bar_length -= len(str(max)) * 2 + 3 + 1
+
+    # バーの長さが5以下の場合はエラーを出す
+    if bar_length < 5:
+        raise ValueError(f'bar_length must be greater than or equal to 5 but bar_length is {bar_length}')
+
+    # パーセンテージの表示方法を取得
+    if kwargs.get('show_percent') is None:
+        show_percent = Percent.SHOW_IN_BAR
+    else:
+        try:
+            show_percent = Percent(kwargs.get('show_percent'))
+        except ValueError:
+            raise ValueError('show_percent must be an instance of Percent')
+    
+    # ステップの表示方法を取得
+    if kwargs.get('showstep') is None:
+        showstep = Step.DONT_SHOW
+    else:
+        try:
+            showstep = Step(kwargs.get('showstep'))
+        except ValueError:
+            raise ValueError('showstep must be an instance of Step')
+        
+    # パーセンテージもステップもバーに表示することはできない
+    if show_percent == Percent.SHOW_IN_BAR and showstep == Step.SHOW_IN_BAR:
+        raise ValueError('show_percent and showstep cannot be shown in the bar at the same time')
+        
+    # バーの作成
+    # パーセンテージを表示する場合
+    if show_percent == Percent.SHOW_IN_BAR:
+        filled = int(bar_length * current / max)
+        empty = bar_length - filled
+        percentage_position = int(bar_length * 0.5) - 3
+        percentage_str = f'{round(current / max * 100, 2):6.2f}%'
+        bar = f'[{filled_char * filled}{empty_char * empty}]'
+        bar = bar[:percentage_position] + percentage_str + bar[percentage_position + 6:]
+
+    # ステップを表示する場合
+    elif showstep == Step.SHOW_IN_BAR:
+        filled = int(bar_length * current / max)
+        empty = bar_length - filled
+        step_str = f'{str(current).rjust(len(str(max)))} / {max}'
+        step_position = int(bar_length * 0.5) - int(len(step_str) * 0.5)
+        bar = f'[{filled_char * filled}{empty_char * empty}]'
+        bar = bar[:step_position] + step_str + bar[step_position + len(step_str) - 1:]
+
+    # なにも表示しない場合
+    else:
+        filled = int(bar_length * current / max)
+        empty = bar_length - filled
+        bar = f'[{filled_char * filled}{empty_char * empty}]'
+
+    before_bar = ""
+    after_bar = ""
+    # バーの前に表示する文字列
+    # prefixの前にパーセンテージを表示する場合
+    if show_percent == Percent.SHOW_IN_BEFORE_PREFIX:
+        before_bar += f'{round(current / max * 100, 2):6.2f}% '
+    # prefixの前にステップを表示する場合
+    if showstep == Step.SHOW_IN_BEFORE_PREFIX:
+        before_bar += f'{str(current).rjust(len(str(max)))} / {max} '
+
+    before_bar += f'{prefix}'
+
+    # prefixの後にパーセンテージを表示する場合
+    if show_percent == Percent.SHOW_IN_AFTER_PREFIX:
+        before_bar += f' {round(current / max * 100, 2):6.2f}%'
+    # prefixの後にステップを表示する場合
+    if showstep == Step.SHOW_IN_AFTER_PREFIX:
+        before_bar += f' {str(current).rjust(len(str(max)))} / {max}'
+
+    # バーの後に表示する文字列
+    # suffixの前にパーセンテージを表示する場合
+    if show_percent == Percent.SHOW_IN_BEFORE_SUFFIX:
+        after_bar += f'{round(current / max * 100, 2):6.2f}% '
+    # suffixの前にステップを表示する場合
+    if showstep == Step.SHOW_IN_BEFORE_SUFFIX:
+        after_bar += f'{str(current).rjust(len(str(max)))} / {max} '
+
+    after_bar += f'{suffix}'
+
+    # suffixの後にパーセンテージを表示する場合
+    if show_percent == Percent.SHOW_IN_AFTER_SUFFIX:
+        after_bar += f' {round(current / max * 100, 2):6.2f}%'
+
+    # suffixの後にステップを表示する場合
+    if showstep == Step.SHOW_IN_AFTER_SUFFIX:
+        after_bar += f' {str(current).rjust(len(str(max)))} / {max}'
+
+    bar = before_bar + bar + after_bar
 
     return bar
 
