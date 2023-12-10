@@ -3,20 +3,20 @@ import sys
 from enum import Enum
 
 class Percent(Enum):
-    SHOW_IN_BAR = 0
-    SHOW_IN_BEFORE_SUFFIX = 1
-    SHOW_IN_AFTER_SUFFIX = 2
-    SHOW_IN_BEFORE_PREFIX = 3
-    SHOW_IN_AFTER_PREFIX = 4
-    DONT_SHOW = 5
+    SHOW_IN_BAR = 1
+    SHOW_IN_BEFORE_SUFFIX = 2
+    SHOW_IN_AFTER_SUFFIX = 3
+    SHOW_IN_BEFORE_PREFIX = 4
+    SHOW_IN_AFTER_PREFIX = 5
+    DONT_SHOW = 6
 
 class Step(Enum):
-    SHOW_IN_BAR = 0
-    SHOW_IN_BEFORE_SUFFIX = 1
-    SHOW_IN_AFTER_SUFFIX = 2
-    SHOW_IN_BEFORE_PREFIX = 3
-    SHOW_IN_AFTER_PREFIX = 4
-    DONT_SHOW = 5
+    SHOW_IN_BAR = 1
+    SHOW_IN_BEFORE_SUFFIX = 2
+    SHOW_IN_AFTER_SUFFIX = 3
+    SHOW_IN_BEFORE_PREFIX = 4
+    SHOW_IN_AFTER_PREFIX = 5
+    DONT_SHOW = 6
 
 def get_terminal_size():
     """
@@ -42,20 +42,20 @@ def make(current, max, **kwargs):
         最大値
     show_percent : Enum, optional
         パーセンテージの表示方法
-        SHOW_IN_BAR: バーの中に表示 (ステップと同時に表示することはできない)
-        SHOW_IN_BEFORE_PREFIX: prefixの前に表示
-        SHOW_IN_AFTER_PREFIX: prefixの後に表示
-        SHOW_IN_BEFORE_SUFFIX: suffixの前に表示
-        SHOW_IN_AFTER_SUFFIX: suffixの後に表示
-        DONT_SHOW: 表示しない
+        progress_bar.Percent.SHOW_IN_BAR: バーの中に表示 (ステップと同時に表示することはできない)
+        progress_bar.Percent.SHOW_IN_BEFORE_PREFIX: prefixの前に表示
+        progress_bar.Percent.SHOW_IN_AFTER_PREFIX: prefixの後に表示
+        progress_bar.Percent.SHOW_IN_BEFORE_SUFFIX: suffixの前に表示
+        progress_bar.Percent.SHOW_IN_AFTER_SUFFIX: suffixの後に表示
+        progress_bar.Percent.DONT_SHOW: 表示しない
     showstep : Enum, optional
         ステップの表示方法
-        SHOW_IN_BAR: バーの中に表示 (パーセンテージと同時に表示することはできない)
-        SHOW_IN_BEFORE_PREFIX: prefixの前に表示
-        SHOW_IN_AFTER_PREFIX: prefixの後に表示
-        SHOW_IN_BEFORE_SUFFIX: suffixの前に表示
-        SHOW_IN_AFTER_SUFFIX: suffixの後に表示
-        DONT_SHOW: 表示しない
+        progress_bar.Step.SHOW_IN_BAR: バーの中に表示 (パーセンテージと同時に表示することはできない)
+        progress_bar.Step.SHOW_IN_BEFORE_PREFIX: prefixの前に表示
+        progress_bar.Step.SHOW_IN_AFTER_PREFIX: prefixの後に表示
+        progress_bar.Step.SHOW_IN_BEFORE_SUFFIX: suffixの前に表示
+        progress_bar.Step.SHOW_IN_AFTER_SUFFIX: suffixの後に表示
+        progress_bar.Step.DONT_SHOW: 表示しない
     filled_char : str, optional
         バーの塗りつぶしに使う文字
     empty_char : str, optional
