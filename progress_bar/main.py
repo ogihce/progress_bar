@@ -2,15 +2,7 @@ import shutil
 import sys
 from enum import Enum
 
-class Percent(Enum):
-    SHOW_IN_BAR = 1
-    SHOW_IN_BEFORE_SUFFIX = 2
-    SHOW_IN_AFTER_SUFFIX = 3
-    SHOW_IN_BEFORE_PREFIX = 4
-    SHOW_IN_AFTER_PREFIX = 5
-    DONT_SHOW = 6
-
-class Step(Enum):
+class Appearance(Enum):
     SHOW_IN_BAR = 1
     SHOW_IN_BEFORE_SUFFIX = 2
     SHOW_IN_AFTER_SUFFIX = 3
@@ -42,33 +34,33 @@ def make(current, max, **kwargs):
         最大値
     show_percent : Enum, optional
         パーセンテージの表示方法
-        progress_bar.Percent.SHOW_IN_BAR: バーの中に表示 (ステップと同時に表示することはできない)
-        progress_bar.Percent.SHOW_IN_BEFORE_PREFIX: prefixの前に表示
-        progress_bar.Percent.SHOW_IN_AFTER_PREFIX: prefixの後に表示
-        progress_bar.Percent.SHOW_IN_BEFORE_SUFFIX: suffixの前に表示 (デフォルト)
-        progress_bar.Percent.SHOW_IN_AFTER_SUFFIX: suffixの後に表示
-        progress_bar.Percent.DONT_SHOW: 表示しない
+        progress_bar.Appearance.SHOW_IN_BAR: バーの中に表示 (ステップと同時に表示することはできない)
+        progress_bar.Appearance.SHOW_IN_BEFORE_PREFIX: prefixの前に表示
+        progress_bar.Appearance.SHOW_IN_AFTER_PREFIX: prefixの後に表示
+        progress_bar.Appearance.SHOW_IN_BEFORE_SUFFIX: suffixの前に表示 (デフォルト)
+        progress_bar.Appearance.SHOW_IN_AFTER_SUFFIX: suffixの後に表示
+        progress_bar.Appearance.DONT_SHOW: 表示しない
     showstep : Enum, optional
         ステップの表示方法
-        progress_bar.Step.SHOW_IN_BAR: バーの中に表示 (パーセンテージと同時に表示することはできない)
-        progress_bar.Step.SHOW_IN_BEFORE_PREFIX: prefixの前に表示
-        progress_bar.Step.SHOW_IN_AFTER_PREFIX: prefixの後に表示
-        progress_bar.Step.SHOW_IN_BEFORE_SUFFIX: suffixの前に表示
-        progress_bar.Step.SHOW_IN_AFTER_SUFFIX: suffixの後に表示
-        progress_bar.Step.DONT_SHOW: 表示しない (デフォルト)
+        progress_bar.Appearance.SHOW_IN_BAR: バーの中に表示 (パーセンテージと同時に表示することはできない)
+        progress_bar.Appearance.SHOW_IN_BEFORE_PREFIX: prefixの前に表示
+        progress_bar.Appearance.SHOW_IN_AFTER_PREFIX: prefixの後に表示
+        progress_bar.Appearance.SHOW_IN_BEFORE_SUFFIX: suffixの前に表示
+        progress_bar.Appearance.SHOW_IN_AFTER_SUFFIX: suffixの後に表示
+        progress_bar.Appearance.DONT_SHOW: 表示しない (デフォルト)
     filled_char : str, optional
-        バーの塗りつぶしに使う文字
+        バーの塗りつぶしに使う文字（列）
     empty_char : str, optional
-        バーの空白に使う文字
+        バーの空白に使う文字（列）
     prefix : str, optional
-        バーの前に表示する文字
+        バーの前に表示する文字列
     suffix : str, optional
-        バー、パーセンテージ、現在の値と最大値の後に表示する文字列
+        バーの後ろに表示する文字列
     bar_length : int, optional
         バーの長さ
     bar_ratio : float, optional
         バーの長さを最大値の何倍にするか
-        (bar_length と bar_ratio の両方が指定された場合は bar_length を優先する)
+        (bar_length と bar_ratio の両方が指定された場合は bar_length を優先)
 
     Returns
     -------
@@ -133,16 +125,16 @@ def make(current, max, **kwargs):
     # バーの前後に表示する文字列の長さを考慮する
     bar_length -= len(prefix) + 1 + len(suffix) + 1
     # パーセンテージをバー以外に表示する場合は8文字分のスペースを確保する
-    if kwargs.get('show_percent') is not None and Percent(kwargs.get('show_percent')) != Percent.DONT_SHOW and Percent(kwargs.get('show_percent')) != Percent.SHOW_IN_BAR:
+    if kwargs.get('show_percent') is not None and Appearance(kwargs.get('show_percent')) != Appearance.DONT_SHOW and Appearance(kwargs.get('show_percent')) != Appearance.SHOW_IN_BAR:
         bar_length -= 8
     # バーに出す場合は2文字分のスペースを確保する
-    elif kwargs.get('show_percent') is not None and Percent(kwargs.get('show_percent')) == Percent.SHOW_IN_BAR:
+    elif kwargs.get('show_percent') is not None and Appearance(kwargs.get('show_percent')) == Appearance.SHOW_IN_BAR:
         bar_length -= 2
     # ステップをバー以外に表示する場合は最大値の桁数 * 2 + 3 + 1分のスペースを確保する
-    if kwargs.get('showstep') is not None and Step(kwargs.get('showstep')) != Step.DONT_SHOW and Step(kwargs.get('showstep')) != Step.SHOW_IN_BAR:
+    if kwargs.get('showstep') is not None and Appearance(kwargs.get('showstep')) != Appearance.DONT_SHOW and Appearance(kwargs.get('showstep')) != Appearance.SHOW_IN_BAR:
         bar_length -= len(str(max)) * 2 + 3 + 1
     # バーに出す場合は2文字分のスペースを確保する
-    elif kwargs.get('showstep') is not None and Step(kwargs.get('showstep')) == Step.SHOW_IN_BAR:
+    elif kwargs.get('showstep') is not None and Appearance(kwargs.get('showstep')) == Appearance.SHOW_IN_BAR:
         bar_length -= 2
 
     # バーの長さが5以下の場合はエラーを出す
@@ -151,29 +143,29 @@ def make(current, max, **kwargs):
 
     # パーセンテージの表示方法を取得
     if kwargs.get('show_percent') is None:
-        show_percent = Percent.SHOW_IN_BAR
+        show_percent = Appearance.SHOW_IN_BAR
     else:
         try:
-            show_percent = Percent(kwargs.get('show_percent'))
+            show_percent = Appearance(kwargs.get('show_percent'))
         except ValueError:
-            raise ValueError('show_percent must be an instance of Percent')
+            raise ValueError('show_percent must be an instance of Appearance')
     
     # ステップの表示方法を取得
     if kwargs.get('showstep') is None:
-        showstep = Step.DONT_SHOW
+        showstep = Appearance.DONT_SHOW
     else:
         try:
-            showstep = Step(kwargs.get('showstep'))
+            showstep = Appearance(kwargs.get('showstep'))
         except ValueError:
-            raise ValueError('showstep must be an instance of Step')
+            raise ValueError('showstep must be an instance of Appearance')
         
     # パーセンテージもステップもバーに表示することはできない
-    if show_percent == Percent.SHOW_IN_BAR and showstep == Step.SHOW_IN_BAR:
+    if show_percent == Appearance.SHOW_IN_BAR and showstep == Appearance.SHOW_IN_BAR:
         raise ValueError('show_percent and showstep cannot be shown in the bar at the same time')
         
     # バーの作成
     # パーセンテージを表示する場合
-    if show_percent == Percent.SHOW_IN_BAR:
+    if show_percent == Appearance.SHOW_IN_BAR:
         filled = int(bar_length * current / max)
         empty = bar_length - filled
         percentage_position = int(bar_length * 0.5) - 3
@@ -182,7 +174,7 @@ def make(current, max, **kwargs):
         bar = bar[:percentage_position] + percentage_str + bar[percentage_position + 6:]
 
     # ステップを表示する場合
-    elif showstep == Step.SHOW_IN_BAR:
+    elif showstep == Appearance.SHOW_IN_BAR:
         filled = int(bar_length * current / max)
         empty = bar_length - filled
         step_str = f' {str(current).rjust(len(str(max)))} / {max} '
@@ -200,39 +192,39 @@ def make(current, max, **kwargs):
     after_bar = ""
     # バーの前に表示する文字列
     # prefixの前にパーセンテージを表示する場合
-    if show_percent == Percent.SHOW_IN_BEFORE_PREFIX:
+    if show_percent == Appearance.SHOW_IN_BEFORE_PREFIX:
         before_bar += f'{round(current / max * 100, 2):6.2f}% '
     # prefixの前にステップを表示する場合
-    if showstep == Step.SHOW_IN_BEFORE_PREFIX:
+    if showstep == Appearance.SHOW_IN_BEFORE_PREFIX:
         before_bar += f'{str(current).rjust(len(str(max)))} / {max} '
 
     if prefix != '':
         before_bar += f'{prefix} '
 
     # prefixの後にパーセンテージを表示する場合
-    if show_percent == Percent.SHOW_IN_AFTER_PREFIX:
+    if show_percent == Appearance.SHOW_IN_AFTER_PREFIX:
         before_bar += f'{round(current / max * 100, 2):6.2f}% '
     # prefixの後にステップを表示する場合
-    if showstep == Step.SHOW_IN_AFTER_PREFIX:
+    if showstep == Appearance.SHOW_IN_AFTER_PREFIX:
         before_bar += f'{str(current).rjust(len(str(max)))} / {max} '
 
     # バーの後に表示する文字列
     # suffixの前にパーセンテージを表示する場合
-    if show_percent == Percent.SHOW_IN_BEFORE_SUFFIX:
+    if show_percent == Appearance.SHOW_IN_BEFORE_SUFFIX:
         after_bar += f' {round(current / max * 100, 2):6.2f}%'
     # suffixの前にステップを表示する場合
-    if showstep == Step.SHOW_IN_BEFORE_SUFFIX:
+    if showstep == Appearance.SHOW_IN_BEFORE_SUFFIX:
         after_bar += f' {str(current).rjust(len(str(max)))} / {max}'
 
     if suffix != '':
         after_bar += f' {suffix}'
 
     # suffixの後にパーセンテージを表示する場合
-    if show_percent == Percent.SHOW_IN_AFTER_SUFFIX:
+    if show_percent == Appearance.SHOW_IN_AFTER_SUFFIX:
         after_bar += f' {round(current / max * 100, 2):6.2f}% '
 
     # suffixの後にステップを表示する場合
-    if showstep == Step.SHOW_IN_AFTER_SUFFIX:
+    if showstep == Appearance.SHOW_IN_AFTER_SUFFIX:
         after_bar += f' {str(current).rjust(len(str(max)))} / {max}'
 
     bar = before_bar + bar + after_bar
