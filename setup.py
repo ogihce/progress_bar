@@ -2,6 +2,6 @@ from setuptools import setup, find_packages
 
 setup(
     name='progress_bar',
-    version='0.2.2',
+    version='0.3.0',
     packages=find_packages()
 )
